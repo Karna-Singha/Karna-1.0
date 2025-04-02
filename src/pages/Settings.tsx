@@ -12,7 +12,6 @@ const Settings = () => {
   const [breakNotifications, setBreakNotifications] = useState(true);
   const [taskNotifications, setTaskNotifications] = useState(true);
   const [progressNotifications, setProgressNotifications] = useState(false);
-  const [accentColor, setAccentColor] = useState('blue');
 
   const handleDarkModeChange = (checked: boolean) => {
     setDarkMode(checked);
@@ -35,11 +34,6 @@ const Settings = () => {
     }
     
     toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} notifications ${checked ? 'enabled' : 'disabled'}`);
-  };
-
-  const handleColorChange = (color: string) => {
-    setAccentColor(color);
-    toast.success(`Accent color updated to ${color}`);
   };
 
   return (
@@ -105,32 +99,6 @@ const Settings = () => {
                       checked={darkMode} 
                       onCheckedChange={handleDarkModeChange} 
                     />
-                  </div>
-                  <Separator />
-                  <div>
-                    <Label>Accent Color</Label>
-                    <div className="flex gap-2 mt-2">
-                      <div 
-                        className={`h-8 w-8 rounded-full bg-blue-500 cursor-pointer border-2 ${accentColor === 'blue' ? 'border-white' : 'border-transparent hover:border-white'}`}
-                        onClick={() => handleColorChange('blue')}
-                      ></div>
-                      <div 
-                        className={`h-8 w-8 rounded-full bg-purple-500 cursor-pointer border-2 ${accentColor === 'purple' ? 'border-white' : 'border-transparent hover:border-white'}`}
-                        onClick={() => handleColorChange('purple')}
-                      ></div>
-                      <div 
-                        className={`h-8 w-8 rounded-full bg-green-500 cursor-pointer border-2 ${accentColor === 'green' ? 'border-white' : 'border-transparent hover:border-white'}`}
-                        onClick={() => handleColorChange('green')}
-                      ></div>
-                      <div 
-                        className={`h-8 w-8 rounded-full bg-red-500 cursor-pointer border-2 ${accentColor === 'red' ? 'border-white' : 'border-transparent hover:border-white'}`}
-                        onClick={() => handleColorChange('red')}
-                      ></div>
-                      <div 
-                        className={`h-8 w-8 rounded-full bg-yellow-500 cursor-pointer border-2 ${accentColor === 'yellow' ? 'border-white' : 'border-transparent hover:border-white'}`}
-                        onClick={() => handleColorChange('yellow')}
-                      ></div>
-                    </div>
                   </div>
                 </div>
               </CardContent>
