@@ -1,12 +1,27 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
+import { toast } from '@/hooks/use-toast';
 
 const Settings = () => {
+  const [darkMode, setDarkMode] = useState(true);
+  const [breakNotifications, setBreakNotifications] = useState(true);
+  const [taskNotifications, setTaskNotifications] = useState(true);
+  const [progressNotifications, setProgressNotifications] = useState(false);
+  const [accentColor, setAccentColor] = useState('blue');
+
+  const handleColorChange = (color: string) => {
+    setAccentColor(color);
+    toast({
+      title: "Accent color updated",
+      description: `Your accent color has been changed to ${color}.`,
+    });
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -30,15 +45,27 @@ const Settings = () => {
                 <div className="grid gap-4">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="break-notifications">Break Reminders</Label>
-                    <Switch id="break-notifications" defaultChecked />
+                    <Switch 
+                      id="break-notifications" 
+                      checked={breakNotifications} 
+                      onCheckedChange={setBreakNotifications} 
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="task-notifications">Task Reminders</Label>
-                    <Switch id="task-notifications" defaultChecked />
+                    <Switch 
+                      id="task-notifications" 
+                      checked={taskNotifications} 
+                      onCheckedChange={setTaskNotifications}
+                    />
                   </div>
                   <div className="flex items-center justify-between">
                     <Label htmlFor="progress-notifications">Progress Updates</Label>
-                    <Switch id="progress-notifications" />
+                    <Switch 
+                      id="progress-notifications" 
+                      checked={progressNotifications} 
+                      onCheckedChange={setProgressNotifications}
+                    />
                   </div>
                 </div>
               </CardContent>
@@ -53,17 +80,36 @@ const Settings = () => {
                 <div className="grid gap-4">
                   <div className="flex items-center justify-between">
                     <Label htmlFor="dark-mode">Dark Mode</Label>
-                    <Switch id="dark-mode" defaultChecked />
+                    <Switch 
+                      id="dark-mode" 
+                      checked={darkMode} 
+                      onCheckedChange={setDarkMode} 
+                    />
                   </div>
                   <Separator />
                   <div>
                     <Label>Accent Color</Label>
                     <div className="flex gap-2 mt-2">
-                      <div className="h-8 w-8 rounded-full bg-blue-500 cursor-pointer border-2 border-transparent hover:border-white"></div>
-                      <div className="h-8 w-8 rounded-full bg-purple-500 cursor-pointer border-2 border-transparent hover:border-white"></div>
-                      <div className="h-8 w-8 rounded-full bg-green-500 cursor-pointer border-2 border-transparent hover:border-white"></div>
-                      <div className="h-8 w-8 rounded-full bg-red-500 cursor-pointer border-2 border-transparent hover:border-white"></div>
-                      <div className="h-8 w-8 rounded-full bg-yellow-500 cursor-pointer border-2 border-transparent hover:border-white"></div>
+                      <div 
+                        className={`h-8 w-8 rounded-full bg-blue-500 cursor-pointer border-2 ${accentColor === 'blue' ? 'border-white' : 'border-transparent hover:border-white'}`}
+                        onClick={() => handleColorChange('blue')}
+                      ></div>
+                      <div 
+                        className={`h-8 w-8 rounded-full bg-purple-500 cursor-pointer border-2 ${accentColor === 'purple' ? 'border-white' : 'border-transparent hover:border-white'}`}
+                        onClick={() => handleColorChange('purple')}
+                      ></div>
+                      <div 
+                        className={`h-8 w-8 rounded-full bg-green-500 cursor-pointer border-2 ${accentColor === 'green' ? 'border-white' : 'border-transparent hover:border-white'}`}
+                        onClick={() => handleColorChange('green')}
+                      ></div>
+                      <div 
+                        className={`h-8 w-8 rounded-full bg-red-500 cursor-pointer border-2 ${accentColor === 'red' ? 'border-white' : 'border-transparent hover:border-white'}`}
+                        onClick={() => handleColorChange('red')}
+                      ></div>
+                      <div 
+                        className={`h-8 w-8 rounded-full bg-yellow-500 cursor-pointer border-2 ${accentColor === 'yellow' ? 'border-white' : 'border-transparent hover:border-white'}`}
+                        onClick={() => handleColorChange('yellow')}
+                      ></div>
                     </div>
                   </div>
                 </div>

@@ -40,8 +40,8 @@ const Sidebar: React.FC = () => {
       </div>
       
       <div className="flex flex-col gap-2">
-        <SidebarItem icon={Home} label="Dashboard" href="/" active={activeRoute === '/'} />
-        <SidebarItem icon={Clock} label="Focus Timer" href="/timer" active={activeRoute === '/timer'} />
+        <SidebarItem icon={Clock} label="Focus Timer" href="/timer" active={activeRoute === '/timer' || activeRoute === '/'} />
+        <SidebarItem icon={Home} label="Dashboard" href="/dashboard" active={activeRoute === '/dashboard'} />
         <SidebarItem icon={BookOpen} label="Tasks" href="/tasks" active={activeRoute === '/tasks'} />
         <SidebarItem icon={BarChart2} label="Statistics" href="/statistics" active={activeRoute === '/statistics'} />
         <SidebarItem icon={Settings} label="Settings" href="/settings" active={activeRoute === '/settings'} />
