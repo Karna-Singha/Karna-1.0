@@ -2,6 +2,7 @@
 import React from 'react';
 import Sidebar from '@/components/Sidebar';
 import WorkTimer from '@/components/WorkTimer';
+import TaskManagement from '@/components/TaskManagement';
 
 const Timer = () => {
   return (
@@ -17,8 +18,13 @@ const Timer = () => {
             </p>
           </header>
           
-          <div className="grid place-items-center">
-            <WorkTimer />
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div className="grid place-items-center">
+              <WorkTimer />
+            </div>
+            <div>
+              <TaskManagement />
+            </div>
           </div>
         </div>
       </main>

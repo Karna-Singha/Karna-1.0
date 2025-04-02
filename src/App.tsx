@@ -4,7 +4,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import Index from "./pages/Index";
 import Timer from "./pages/Timer";
 import Tasks from "./pages/Tasks";
 import Statistics from "./pages/Statistics";
@@ -21,7 +20,6 @@ const App = () => (
       <BrowserRouter>
         <Routes>
           <Route path="/" element={<Navigate to="/timer" replace />} />
-          <Route path="/dashboard" element={<Index />} />
           <Route path="/timer" element={<Timer />} />
           <Route path="/tasks" element={<Tasks />} />
           <Route path="/statistics" element={<Statistics />} />

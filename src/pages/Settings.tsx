@@ -5,7 +5,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Switch } from '@/components/ui/switch';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { toast } from '@/hooks/use-toast';
+import { toast } from 'sonner';
 
 const Settings = () => {
   const [darkMode, setDarkMode] = useState(true);
@@ -14,12 +14,32 @@ const Settings = () => {
   const [progressNotifications, setProgressNotifications] = useState(false);
   const [accentColor, setAccentColor] = useState('blue');
 
+  const handleDarkModeChange = (checked: boolean) => {
+    setDarkMode(checked);
+    toast.success(`${checked ? 'Dark' : 'Light'} mode enabled`);
+  };
+
+  const handleNotificationChange = (type: string, checked: boolean) => {
+    switch (type) {
+      case 'break':
+        setBreakNotifications(checked);
+        break;
+      case 'task':
+        setTaskNotifications(checked);
+        break;
+      case 'progress':
+        setProgressNotifications(checked);
+        break;
+      default:
+        return;
+    }
+    
+    toast.success(`${type.charAt(0).toUpperCase() + type.slice(1)} notifications ${checked ? 'enabled' : 'disabled'}`);
+  };
+
   const handleColorChange = (color: string) => {
     setAccentColor(color);
-    toast({
-      title: "Accent color updated",
-      description: `Your accent color has been changed to ${color}.`,
-    });
+    toast.success(`Accent color updated to ${color}`);
   };
 
   return (
@@ -48,7 +68,7 @@ const Settings = () => {
                     <Switch 
                       id="break-notifications" 
                       checked={breakNotifications} 
-                      onCheckedChange={setBreakNotifications} 
+                      onCheckedChange={(checked) => handleNotificationChange('break', checked)} 
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -56,7 +76,7 @@ const Settings = () => {
                     <Switch 
                       id="task-notifications" 
                       checked={taskNotifications} 
-                      onCheckedChange={setTaskNotifications}
+                      onCheckedChange={(checked) => handleNotificationChange('task', checked)}
                     />
                   </div>
                   <div className="flex items-center justify-between">
@@ -64,7 +84,7 @@ const Settings = () => {
                     <Switch 
                       id="progress-notifications" 
                       checked={progressNotifications} 
-                      onCheckedChange={setProgressNotifications}
+                      onCheckedChange={(checked) => handleNotificationChange('progress', checked)}
                     />
                   </div>
                 </div>
@@ -83,7 +103,7 @@ const Settings = () => {
                     <Switch 
                       id="dark-mode" 
                       checked={darkMode} 
-                      onCheckedChange={setDarkMode} 
+                      onCheckedChange={handleDarkModeChange} 
                     />
                   </div>
                   <Separator />
