@@ -1,6 +1,6 @@
 
 import React from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 import { Home, BookOpen, BarChart2, Settings, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 
@@ -29,8 +29,9 @@ const SidebarItem: React.FC<SidebarItemProps> = ({ icon: Icon, label, href, acti
 };
 
 const Sidebar: React.FC = () => {
-  // In a real app, we would determine which route is active
-  const activeRoute = '/';
+  // Use the location hook to determine the active route
+  const location = useLocation();
+  const activeRoute = location.pathname;
 
   return (
     <div className="w-64 h-screen bg-karna-dark-blue p-4 flex flex-col gap-6">
