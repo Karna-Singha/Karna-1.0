@@ -1,24 +1,16 @@
-
-import React, { useState, useEffect } from 'react';
-import { Check, Plus, X } from 'lucide-react';
+import * as React from 'react';
+import { Check, Plus, X, Calendar, Clock } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-
-interface Task {
-  id: string;
-  title: string;
-  subject: string;
-  difficulty: number;
-  completed: boolean;
-  createdAt: Date;
-}
+import { Badge } from '@/components/ui/badge';
+import { useTask, Task } from '@/contexts/TaskContext';
+import { format, isPast, isFuture } from 'date-fns';
 
 interface TaskManagementProps {
   onTasksUpdate?: (tasks: Task[]) => void;
-  initialTasks?: Task[];
 }
 
 const subjects = [
@@ -31,66 +23,35 @@ const subjects = [
   "Organic Chemistry"
 ];
 
-const TaskManagement: React.FC<TaskManagementProps> = ({ 
-  onTasksUpdate,
-  initialTasks = []
-}) => {
-  const [tasks, setTasks] = useState<Task[]>(initialTasks.length > 0 ? initialTasks : [
-    {
-      id: '1',
-      title: 'Complete physics problems from chapter 5',
-      subject: 'Physics',
-      difficulty: 4,
-      completed: false,
-      createdAt: new Date()
-    },
-    {
-      id: '2',
-      title: 'Review organic chemistry nomenclature',
-      subject: 'Organic Chemistry',
-      difficulty: 3,
-      completed: false,
-      createdAt: new Date()
-    }
-  ]);
+const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
+  const { tasks, addTask, toggleTaskCompletion, deleteTask } = useTask();
+  const [newTaskTitle, setNewTaskTitle] = React.useState<string>('');
+  const [newSubject, setNewSubject] = React.useState<string>('Physics');
+  const [newDifficulty, setNewDifficulty] = React.useState<number>(3);
+  const [isAddingTask, setIsAddingTask] = React.useState<boolean>(false);
+  const [showSpacedTasks, setShowSpacedTasks] = React.useState<boolean>(true);
   
-  const [newTask, setNewTask] = useState<string>('');
-  const [newSubject, setNewSubject] = useState<string>('Physics');
-  const [newDifficulty, setNewDifficulty] = useState<number>(3);
-  const [isAddingTask, setIsAddingTask] = useState<boolean>(false);
-  
-  useEffect(() => {
+  React.useEffect(() => {
     // Notify parent component of task updates
     if (onTasksUpdate) {
       onTasksUpdate(tasks);
     }
   }, [tasks, onTasksUpdate]);
 
-  const addTask = () => {
-    if (newTask.trim() === '') return;
+  const handleAddTask = () => {
+    if (newTaskTitle.trim() === '') return;
     
-    const task: Task = {
-      id: Date.now().toString(),
-      title: newTask,
+    addTask({
+      title: newTaskTitle,
       subject: newSubject,
       difficulty: newDifficulty,
-      completed: false,
-      createdAt: new Date()
-    };
+      completed: false
+    });
     
-    setTasks([...tasks, task]);
-    setNewTask('');
+    setNewTaskTitle('');
     setNewSubject('Physics');
     setNewDifficulty(3);
     setIsAddingTask(false);
-  };
-  
-  const toggleTaskCompletion = (id: string) => {
-    setTasks(
-      tasks.map(task => 
-        task.id === id ? { ...task, completed: !task.completed } : task
-      )
-    );
   };
   
   const getDifficultyLabel = (difficulty: number): string => {
@@ -126,12 +87,61 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
         return 'bg-yellow-500/10 text-yellow-600';
     }
   };
-  
+
+  const getSpacedTaskColor = (task: Task): string => {
+    if (!task.isSpacedTask) return '';
+    
+    if (task.spaceRepetitionDay && task.spaceRepetitionDay <= 7) {
+      return 'border-l-4 border-blue-500';
+    } else if (task.spaceRepetitionDay && task.spaceRepetitionDay <= 30) {
+      return 'border-l-4 border-purple-500';
+    } else {
+      return 'border-l-4 border-orange-500';
+    }
+  };
+
+  // Filter tasks based on our display settings
+  const filteredTasks = tasks.filter(task => {
+    // If we're showing spaced tasks, include everything
+    if (showSpacedTasks) return true;
+    // Otherwise only include non-spaced tasks
+    return !task.isSpacedTask;
+  });
+
+  // Sort tasks - first by completion, then by due date for spaced tasks
+  const sortedTasks = [...filteredTasks].sort((a, b) => {
+    // Put completed tasks at the bottom
+    if (a.completed !== b.completed) {
+      return a.completed ? 1 : -1;
+    }
+    
+    // For spaced tasks, sort by due date
+    if (a.isSpacedTask && b.isSpacedTask) {
+      return a.createdAt.getTime() - b.createdAt.getTime();
+    }
+    
+    // Put non-spaced tasks above spaced tasks
+    if (a.isSpacedTask !== b.isSpacedTask) {
+      return a.isSpacedTask ? 1 : -1;
+    }
+    
+    // Sort by creation date for regular tasks
+    return b.createdAt.getTime() - a.createdAt.getTime();
+  });
+
   return (
     <Card className="shadow-lg border-karna-primary/20">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-2xl font-bold flex items-center justify-between">
-          Tasks
+      <CardHeader className="pb-2 flex-row flex justify-between items-center">
+        <CardTitle className="text-2xl font-bold">Tasks</CardTitle>
+        <div className="flex gap-2">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            onClick={() => setShowSpacedTasks(!showSpacedTasks)}
+            className="text-xs"
+          >
+            {showSpacedTasks ? 'Hide Spaced Tasks' : 'Show Spaced Tasks'}
+          </Button>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -140,15 +150,15 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
           >
             {isAddingTask ? <X /> : <Plus />}
           </Button>
-        </CardTitle>
+        </div>
       </CardHeader>
       <CardContent>
         {isAddingTask && (
           <div className="mb-4 p-3 bg-muted rounded-lg space-y-3 animate-fade-in">
             <Input
               placeholder="Enter task title..."
-              value={newTask}
-              onChange={(e) => setNewTask(e.target.value)}
+              value={newTaskTitle}
+              onChange={(e) => setNewTaskTitle(e.target.value)}
               className="border-muted-foreground/20"
             />
             
@@ -186,19 +196,19 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
               </Select>
             </div>
             
-            <Button className="w-full" onClick={addTask}>
+            <Button className="w-full" onClick={handleAddTask}>
               Add Task
             </Button>
           </div>
         )}
         
         <div className="space-y-2">
-          {tasks.map((task) => (
+          {sortedTasks.map((task) => (
             <div
               key={task.id}
               className={`flex items-start gap-3 p-3 rounded-lg transition-colors ${
                 task.completed ? 'bg-muted/40 text-muted-foreground line-through' : 'bg-muted'
-              }`}
+              } ${getSpacedTaskColor(task)}`}
             >
               <Checkbox
                 checked={task.completed}
@@ -208,19 +218,32 @@ const TaskManagement: React.FC<TaskManagementProps> = ({
               
               <div className="flex-1 min-w-0">
                 <p className="font-medium">{task.title}</p>
-                <div className="flex items-center gap-2 mt-1">
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
                   <span className="text-xs bg-primary/10 text-primary px-2 py-0.5 rounded-full">
                     {task.subject}
                   </span>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${getDifficultyColor(task.difficulty)}`}>
                     {getDifficultyLabel(task.difficulty)}
                   </span>
+                  
+                  {task.isSpacedTask && (
+                    <Badge variant="outline" className="text-xs flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {format(task.createdAt, 'MMM d')}
+                    </Badge>
+                  )}
+                  
+                  {task.isSpacedTask && task.spaceRepetitionDay && (
+                    <Badge variant="secondary" className="text-xs">
+                      SR: {task.spaceRepetitionDay} days
+                    </Badge>
+                  )}
                 </div>
               </div>
             </div>
           ))}
           
-          {tasks.length === 0 && (
+          {sortedTasks.length === 0 && (
             <div className="text-center py-6 text-muted-foreground">
               No tasks yet. Add some to get started!
             </div>

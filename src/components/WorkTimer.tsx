@@ -1,15 +1,12 @@
-
-import React, { useState, useEffect } from 'react';
+import * as React from 'react';
 import { Play, Pause, RotateCcw } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
+import { useTimer } from '@/contexts/TimerContext';
 
 interface WorkTimerProps {
   onTimerUpdate?: (workSeconds: number, breakSeconds: number, productivityRatio: number) => void;
-  initialWorkSeconds?: number;
-  initialBreakSeconds?: number;
-  initialProductivityRatio?: number;
 }
 
 const formatTime = (seconds: number): string => {
@@ -22,62 +19,22 @@ const formatTime = (seconds: number): string => {
     .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-const WorkTimer: React.FC<WorkTimerProps> = ({
-  onTimerUpdate,
-  initialWorkSeconds = 0,
-  initialBreakSeconds = 0,
-  initialProductivityRatio = 100
-}) => {
-  const [workSeconds, setWorkSeconds] = useState<number>(initialWorkSeconds);
-  const [breakSeconds, setBreakSeconds] = useState<number>(initialBreakSeconds);
-  const [isWorking, setIsWorking] = useState<boolean>(false);
-  const [productivityRatio, setProductivityRatio] = useState<number>(initialProductivityRatio);
+const WorkTimer: React.FC<WorkTimerProps> = ({ onTimerUpdate }) => {
+  const { 
+    workSeconds, 
+    breakSeconds, 
+    isWorking, 
+    productivityRatio,
+    toggleTimer,
+    resetTimer
+  } = useTimer();
   
-  useEffect(() => {
-    let interval: NodeJS.Timeout | null = null;
-    
-    if (isWorking) {
-      interval = setInterval(() => {
-        setWorkSeconds(prev => prev + 1);
-      }, 1000);
-    } else if (!isWorking && workSeconds > 0) {
-      interval = setInterval(() => {
-        setBreakSeconds(prev => prev + 1);
-      }, 1000);
-    }
-    
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [isWorking, workSeconds]);
-  
-  useEffect(() => {
-    if (workSeconds > 0 || breakSeconds > 0) {
-      const ratio = Math.round((workSeconds / (workSeconds + breakSeconds)) * 100);
-      setProductivityRatio(ratio);
-
-      // Call the parent component's callback if provided
-      if (onTimerUpdate) {
-        onTimerUpdate(workSeconds, breakSeconds, ratio);
-      }
-    }
-  }, [workSeconds, breakSeconds, onTimerUpdate]);
-  
-  const toggleTimer = () => {
-    setIsWorking(!isWorking);
-  };
-  
-  const resetTimer = () => {
-    setWorkSeconds(0);
-    setBreakSeconds(0);
-    setIsWorking(false);
-    setProductivityRatio(100);
-    
+  React.useEffect(() => {
     // Call the parent component's callback if provided
     if (onTimerUpdate) {
-      onTimerUpdate(0, 0, 100);
+      onTimerUpdate(workSeconds, breakSeconds, productivityRatio);
     }
-  };
+  }, [workSeconds, breakSeconds, productivityRatio, onTimerUpdate]);
   
   const getStatusColor = (): string => {
     if (productivityRatio >= 80) return 'text-green-500';
