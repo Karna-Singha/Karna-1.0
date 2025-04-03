@@ -31,6 +31,10 @@ const AIInsights: React.FC<AIInsightsProps> = ({
   const [insight, setInsight] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [lastGeneratedAt, setLastGeneratedAt] = useState<number>(0);
+  const [slackDays, setSlackDays] = useState<number>(0);
+  
+  // Track last activity date to detect slack days
+  const [lastActiveDate, setLastActiveDate] = useState<string>(new Date().toDateString());
 
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
@@ -42,6 +46,41 @@ const AIInsights: React.FC<AIInsightsProps> = ({
       .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
   };
 
+  // Check for slack days when component mounts
+  useEffect(() => {
+    const today = new Date().toDateString();
+    const storedDate = localStorage.getItem('lastActiveDate') || today;
+    const storedSlackDays = parseInt(localStorage.getItem('slackDays') || '0');
+    
+    setLastActiveDate(storedDate);
+    setSlackDays(storedSlackDays);
+    
+    // If this is a new day and different from last active day
+    if (today !== storedDate) {
+      // Calculate days difference
+      const lastDate = new Date(storedDate);
+      const currentDate = new Date(today);
+      const daysDifference = Math.floor((currentDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+      
+      if (daysDifference > 1) {
+        // User has missed days
+        setSlackDays(storedSlackDays + daysDifference - 1);
+        localStorage.setItem('slackDays', (storedSlackDays + daysDifference - 1).toString());
+      }
+      
+      // Update the active date
+      localStorage.setItem('lastActiveDate', today);
+      setLastActiveDate(today);
+    }
+  }, []);
+
+  // Save data when user is active
+  useEffect(() => {
+    if (workSeconds > 60) { // If user has worked for at least a minute
+      localStorage.setItem('lastActiveDate', new Date().toDateString());
+    }
+  }, [workSeconds]);
+  
   const generateInsight = async () => {
     // Prevent generating insights too frequently
     const now = Date.now();
@@ -54,12 +93,28 @@ const AIInsights: React.FC<AIInsightsProps> = ({
     setLastGeneratedAt(now);
 
     try {
+      // Identify difficult subjects (difficulty >= 4)
+      const difficultSubjects = tasks
+        .filter(t => t.difficulty >= 4)
+        .map(t => t.subject);
+      
+      const uniqueDifficultSubjects = [...new Set(difficultSubjects)];
+      
       // Prepare context for the AI
       const workTime = formatTime(workSeconds);
       const breakTime = formatTime(breakSeconds);
       const completedTasks = tasks.filter(t => t.completed).length;
       const pendingTasks = tasks.filter(t => !t.completed).length;
       const subjects = [...new Set(tasks.map(t => t.subject))];
+      
+      let insightMode = 'normal';
+      if (slackDays > 0) {
+        insightMode = 'slacking';
+      } else if (uniqueDifficultSubjects.length > 0) {
+        insightMode = 'difficult_subjects';
+      } else if (productivityRatio < 50) {
+        insightMode = 'low_productivity';
+      }
 
       const userContext = `
         User Data:
@@ -69,6 +124,9 @@ const AIInsights: React.FC<AIInsightsProps> = ({
         - Completed tasks: ${completedTasks}
         - Pending tasks: ${pendingTasks}
         - Subjects: ${subjects.join(', ')}
+        - Difficult subjects: ${uniqueDifficultSubjects.join(', ')}
+        - Slack days: ${slackDays}
+        - Insight mode: ${insightMode}
       `;
 
       // For demonstration - in a real app, this would be an actual API call
@@ -79,17 +137,62 @@ const AIInsights: React.FC<AIInsightsProps> = ({
       // In a real app, you would replace this with an actual API call
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      // Sample insights based on the provided context
-      const insights = [
-        `You've been working hard! With a productivity ratio of ${productivityRatio}%, you're doing great. Consider taking a slightly longer break next time to maintain this momentum.`,
-        `I notice you've completed ${completedTasks} tasks today. Great progress! Focus on breaking down your remaining ${pendingTasks} tasks into smaller chunks for better momentum.`,
-        `Your study pattern shows strength in ${subjects[0] || 'your subjects'}. For optimal learning, try interleaving with ${subjects[1] || 'other subjects'} to enhance memory retention.`,
-        `Based on your focus patterns, you might benefit from the Pomodoro technique. Try 25-minute focus sessions with 5-minute breaks between them.`,
-        `You've spent ${workTime} working. To optimize your learning, consider reviewing ${subjects[0] || 'your materials'} again in 24 hours to strengthen neural connections.`
-      ];
+      // Generate insights based on the identified mode
+      let randomInsight = '';
       
-      const randomInsight = insights[Math.floor(Math.random() * insights.length)];
+      if (insightMode === 'slacking') {
+        // Hinglish slang for when user is slacking
+        const slackingInsights = [
+          `Arrey yaar! ${slackDays} din se gayab ho? Kitna chill kar rahe ho! Get back to your study schedule, especially for ${uniqueDifficultSubjects[0] || subjects[0]}!`,
+          `Kya scene hai bhai? ${slackDays} din se koi padhai nahi? Thoda to mehnat karo, especially on ${uniqueDifficultSubjects[0] || subjects[0]}!`,
+          `Bhai/Behen, ${slackDays} din ho gaye aur aap dikhe nahi. Padhai ka kya hua? ${uniqueDifficultSubjects[0] || subjects[0]} needs your attention ASAP!`,
+          `Hello ji, ${slackDays} din se break chal raha hai? Great chill! Par ab ${uniqueDifficultSubjects[0] || subjects[0]} pe dhyan do thoda!`,
+          `Kaise ho mitr? ${slackDays} din se gayab? Thoda padhai pe dhyan do, especially ${uniqueDifficultSubjects[0] || subjects[0]} pe focus karo!`
+        ];
+        
+        randomInsight = slackingInsights[Math.floor(Math.random() * slackingInsights.length)];
+      } else if (insightMode === 'difficult_subjects') {
+        // Reminders about difficult subjects
+        const difficultSubjectInsights = [
+          `I noticed ${uniqueDifficultSubjects.join(', ')} are challenging for you. Consider dedicating 25% more time to these subjects this week.`,
+          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) need more frequent revision. Try the Feynman technique - explain the concepts aloud to improve understanding.`,
+          `Time to focus on your challenging areas! ${uniqueDifficultSubjects.join(', ')} need extra attention. Try breaking down these topics into smaller chunks for better comprehension.`,
+          `Don't forget to revise ${uniqueDifficultSubjects.join(', ')} today. Studies show that difficult subjects benefit from spaced repetition - multiple short study sessions spread over time.`,
+          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) are the key to improving your overall performance. Schedule focused sessions specifically for these topics.`
+        ];
+        
+        randomInsight = difficultSubjectInsights[Math.floor(Math.random() * difficultSubjectInsights.length)];
+      } else if (insightMode === 'low_productivity') {
+        // Low productivity insights
+        const lowProductivityInsights = [
+          `Your productivity ratio is at ${productivityRatio}%. Try the Pomodoro technique - 25 minutes of focused work followed by a 5-minute break might help improve this.`,
+          `I've noticed your productivity is at ${productivityRatio}%. Consider eliminating distractions or changing your study environment to help focus better.`,
+          `With a productivity ratio of ${productivityRatio}%, you might benefit from shorter, more focused study sessions. Quality often beats quantity!`,
+          `Your current productivity ratio is ${productivityRatio}%. Try setting specific goals for each study session to maintain focus and track progress better.`,
+          `Productivity currently at ${productivityRatio}%. Consider studying your most challenging subject (${uniqueDifficultSubjects[0] || subjects[0]}) when you're most alert during the day.`
+        ];
+        
+        randomInsight = lowProductivityInsights[Math.floor(Math.random() * lowProductivityInsights.length)];
+      } else {
+        // Regular insights
+        const regularInsights = [
+          `You've been working hard! With a productivity ratio of ${productivityRatio}%, you're doing great. Consider taking a slightly longer break next time to maintain this momentum.`,
+          `I notice you've completed ${completedTasks} tasks today. Great progress! Focus on breaking down your remaining ${pendingTasks} tasks into smaller chunks for better momentum.`,
+          `Your study pattern shows strength in ${subjects[0] || 'your subjects'}. For optimal learning, try interleaving with ${subjects[1] || 'other subjects'} to enhance memory retention.`,
+          `Based on your focus patterns, you might benefit from the Pomodoro technique. Try 25-minute focus sessions with 5-minute breaks between them.`,
+          `You've spent ${workTime} working. To optimize your learning, consider reviewing ${subjects[0] || 'your materials'} again in 24 hours to strengthen neural connections.`
+        ];
+        
+        randomInsight = regularInsights[Math.floor(Math.random() * regularInsights.length)];
+      }
+      
       setInsight(randomInsight);
+      
+      // Reset slack days if user is active today
+      if (slackDays > 0 && workSeconds > 300) {
+        setSlackDays(0);
+        localStorage.setItem('slackDays', '0');
+      }
       
       toast.success("AI insight generated!");
     } catch (error) {
