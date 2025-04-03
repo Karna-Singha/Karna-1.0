@@ -2,29 +2,47 @@ import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import StatsOverview from '@/components/StatsOverview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Sparkles, Loader2 } from 'lucide-react';
+import { Sparkles, Loader2, Info, AlertTriangle, CheckCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
-// DeepSeek API key is now directly integrated
-const DEEPSEEK_API_KEY = "sk-b269b97497974e3b96b5d27b766cbb7b";
+interface AIRecommendation {
+  evidence: string;
+  problem: string;
+  solution: string;
+}
 
 const Statistics = () => {
-  const [aiRecommendation, setAiRecommendation] = useState<string>('');
+  const [aiRecommendation, setAiRecommendation] = useState<AIRecommendation | null>(null);
   const [isLoadingRecommendation, setIsLoadingRecommendation] = useState<boolean>(true);
 
   const generateRecommendation = async () => {
     setIsLoadingRecommendation(true);
     
     try {
-      // In a real implementation, this would make an API call to DeepSeek
-      // For demonstration, we'll simulate a delay and response
+      // Simulate API delay
       await new Promise(resolve => setTimeout(resolve, 1500));
       
-      const recommendations = [
-        "Based on your study patterns, I recommend focusing more on Physics and allocating specific times for difficult exercises. Your performance in physical chemistry has improved by 15%, which suggests your study strategy for this subject is effective.",
-        "Your revision pattern shows gaps in Organic Chemistry. Consider using spaced repetition for formulas and reactions. The data suggests you perform best when studying in 50-minute focused sessions followed by 10-minute breaks.",
-        "Analysis of your learning patterns suggests you retain information better when you review material 24 hours after initially studying it. Try implementing a structured review schedule for Mathematics to improve problem-solving efficiency.",
-        "Your productivity peaks during morning hours (8-11 AM) with a 78% efficiency rate. Consider scheduling your most challenging subjects during this window. For Botany, visual learning methods have proven most effective based on your task completion rates."
+      const recommendations: AIRecommendation[] = [
+        {
+          evidence: "Your study data shows that you spend 45% of your time on Physics but only complete 25% of the assigned tasks.",
+          problem: "There's a significant gap between time invested and task completion rate in Physics, indicating potential inefficiencies in your study approach.",
+          solution: "Break down Physics problems into smaller, manageable chunks and use the Pomodoro technique (25-minute focused sessions) specifically for problem-solving exercises."
+        },
+        {
+          evidence: "Analysis shows irregular study patterns in Organic Chemistry with gaps of 4-5 days between sessions.",
+          problem: "Long gaps between study sessions are affecting your retention of complex organic chemistry concepts and reactions.",
+          solution: "Implement a spaced repetition system: review organic chemistry concepts every 2 days, even if briefly (15-20 minutes), to maintain continuity."
+        },
+        {
+          evidence: "Your productivity metrics show an 85% efficiency rate during morning hours (8-11 AM) compared to 45% in evenings.",
+          problem: "You're not maximizing your peak productivity hours for challenging subjects.",
+          solution: "Schedule your most demanding subjects (based on your assessments) during the morning hours. Save revision and lighter topics for evening sessions."
+        },
+        {
+          evidence: "Task completion data indicates that you complete 30% more exercises when using visual learning methods.",
+          problem: "Current text-heavy study approach may not be optimal for your learning style.",
+          solution: "Incorporate more diagrams, mind maps, and visual aids in your study materials. Use color-coding for different concepts and create visual flowcharts for complex processes."
+        }
       ];
       
       const randomRecommendation = recommendations[Math.floor(Math.random() * recommendations.length)];
@@ -38,7 +56,6 @@ const Statistics = () => {
     }
   };
 
-  // Generate recommendation automatically when component mounts
   useEffect(() => {
     generateRecommendation();
   }, []);
@@ -74,24 +91,41 @@ const Statistics = () => {
                       <span className="ml-2">Analyzing your study patterns...</span>
                     </div>
                   ) : aiRecommendation ? (
-                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
-                      <p className="text-muted-foreground">
-                        {aiRecommendation}
-                      </p>
+                    <div className="space-y-4">
+                      {/* Evidence Section */}
+                      <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+                        <div className="flex items-start gap-3">
+                          <Info className="h-5 w-5 text-primary mt-1 flex-shrink-0" />
+                          <div>
+                            <h3 className="font-medium text-primary mb-1">Evidence</h3>
+                            <p className="text-muted-foreground">{aiRecommendation.evidence}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Problem Section */}
+                      <div className="p-4 rounded-lg bg-destructive/5 border border-destructive/10">
+                        <div className="flex items-start gap-3">
+                          <AlertTriangle className="h-5 w-5 text-destructive mt-1 flex-shrink-0" />
+                          <div>
+                            <h3 className="font-medium text-destructive mb-1">Problem</h3>
+                            <p className="text-muted-foreground">{aiRecommendation.problem}</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* Solution Section */}
+                      <div className="p-4 rounded-lg bg-green-500/5 border border-green-500/10">
+                        <div className="flex items-start gap-3">
+                          <CheckCircle className="h-5 w-5 text-green-500 mt-1 flex-shrink-0" />
+                          <div>
+                            <h3 className="font-medium text-green-500 mb-1">Solution</h3>
+                            <p className="text-muted-foreground">{aiRecommendation.solution}</p>
+                          </div>
+                        </div>
+                      </div>
                     </div>
-                  ) : (
-                    <>
-                      <p className="text-muted-foreground">
-                        Your most productive day is <span className="font-medium text-primary">Friday</span>, with an average productivity ratio of <span className="font-medium text-primary">85%</span>.
-                      </p>
-                      <p className="text-muted-foreground">
-                        You've completed <span className="font-medium text-primary">24 tasks</span> this week, which is <span className="font-medium text-green-500">15% more</span> than last week.
-                      </p>
-                      <p className="text-muted-foreground">
-                        Your average study session lasts <span className="font-medium text-primary">45 minutes</span>, which is optimal for deep focus.
-                      </p>
-                    </>
-                  )}
+                  ) : null}
                 </div>
               </CardContent>
             </Card>
