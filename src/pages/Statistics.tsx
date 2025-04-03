@@ -1,15 +1,16 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Sidebar from '@/components/Sidebar';
 import StatsOverview from '@/components/StatsOverview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Button } from '@/components/ui/button';
 import { Sparkles, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
+// DeepSeek API key is now directly integrated
+const DEEPSEEK_API_KEY = "sk-b269b97497974e3b96b5d27b766cbb7b";
+
 const Statistics = () => {
   const [aiRecommendation, setAiRecommendation] = useState<string>('');
-  const [isLoadingRecommendation, setIsLoadingRecommendation] = useState<boolean>(false);
+  const [isLoadingRecommendation, setIsLoadingRecommendation] = useState<boolean>(true);
 
   const generateRecommendation = async () => {
     setIsLoadingRecommendation(true);
@@ -37,6 +38,11 @@ const Statistics = () => {
     }
   };
 
+  // Generate recommendation automatically when component mounts
+  useEffect(() => {
+    generateRecommendation();
+  }, []);
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -55,25 +61,9 @@ const Statistics = () => {
           <div className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle className="flex items-center justify-between">
+                <CardTitle className="flex items-center">
                   <span>AI Recommendations</span>
-                  <Button 
-                    size="sm" 
-                    onClick={generateRecommendation}
-                    disabled={isLoadingRecommendation}
-                  >
-                    {isLoadingRecommendation ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Analyzing...
-                      </>
-                    ) : (
-                      <>
-                        <Sparkles className="mr-2 h-4 w-4" />
-                        Generate Insights
-                      </>
-                    )}
-                  </Button>
+                  <Sparkles className="ml-2 h-4 w-4 text-yellow-500" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
