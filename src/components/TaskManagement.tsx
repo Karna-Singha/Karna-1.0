@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Check, Plus, X } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,11 @@ interface Task {
   createdAt: Date;
 }
 
+interface TaskManagementProps {
+  onTasksUpdate?: (tasks: Task[]) => void;
+  initialTasks?: Task[];
+}
+
 const subjects = [
   "Physics",
   "Mathematics",
@@ -26,8 +31,11 @@ const subjects = [
   "Organic Chemistry"
 ];
 
-const TaskManagement: React.FC = () => {
-  const [tasks, setTasks] = useState<Task[]>([
+const TaskManagement: React.FC<TaskManagementProps> = ({ 
+  onTasksUpdate,
+  initialTasks = []
+}) => {
+  const [tasks, setTasks] = useState<Task[]>(initialTasks.length > 0 ? initialTasks : [
     {
       id: '1',
       title: 'Complete physics problems from chapter 5',
@@ -51,6 +59,13 @@ const TaskManagement: React.FC = () => {
   const [newDifficulty, setNewDifficulty] = useState<number>(3);
   const [isAddingTask, setIsAddingTask] = useState<boolean>(false);
   
+  useEffect(() => {
+    // Notify parent component of task updates
+    if (onTasksUpdate) {
+      onTasksUpdate(tasks);
+    }
+  }, [tasks, onTasksUpdate]);
+
   const addTask = () => {
     if (newTask.trim() === '') return;
     

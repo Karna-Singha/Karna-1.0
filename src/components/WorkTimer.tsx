@@ -5,6 +5,13 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 
+interface WorkTimerProps {
+  onTimerUpdate?: (workSeconds: number, breakSeconds: number, productivityRatio: number) => void;
+  initialWorkSeconds?: number;
+  initialBreakSeconds?: number;
+  initialProductivityRatio?: number;
+}
+
 const formatTime = (seconds: number): string => {
   const hrs = Math.floor(seconds / 3600);
   const mins = Math.floor((seconds % 3600) / 60);
@@ -15,11 +22,16 @@ const formatTime = (seconds: number): string => {
     .padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
 };
 
-const WorkTimer: React.FC = () => {
-  const [workSeconds, setWorkSeconds] = useState<number>(0);
-  const [breakSeconds, setBreakSeconds] = useState<number>(0);
+const WorkTimer: React.FC<WorkTimerProps> = ({
+  onTimerUpdate,
+  initialWorkSeconds = 0,
+  initialBreakSeconds = 0,
+  initialProductivityRatio = 100
+}) => {
+  const [workSeconds, setWorkSeconds] = useState<number>(initialWorkSeconds);
+  const [breakSeconds, setBreakSeconds] = useState<number>(initialBreakSeconds);
   const [isWorking, setIsWorking] = useState<boolean>(false);
-  const [productivityRatio, setProductivityRatio] = useState<number>(100);
+  const [productivityRatio, setProductivityRatio] = useState<number>(initialProductivityRatio);
   
   useEffect(() => {
     let interval: NodeJS.Timeout | null = null;
@@ -43,8 +55,13 @@ const WorkTimer: React.FC = () => {
     if (workSeconds > 0 || breakSeconds > 0) {
       const ratio = Math.round((workSeconds / (workSeconds + breakSeconds)) * 100);
       setProductivityRatio(ratio);
+
+      // Call the parent component's callback if provided
+      if (onTimerUpdate) {
+        onTimerUpdate(workSeconds, breakSeconds, ratio);
+      }
     }
-  }, [workSeconds, breakSeconds]);
+  }, [workSeconds, breakSeconds, onTimerUpdate]);
   
   const toggleTimer = () => {
     setIsWorking(!isWorking);
@@ -55,6 +72,11 @@ const WorkTimer: React.FC = () => {
     setBreakSeconds(0);
     setIsWorking(false);
     setProductivityRatio(100);
+    
+    // Call the parent component's callback if provided
+    if (onTimerUpdate) {
+      onTimerUpdate(0, 0, 100);
+    }
   };
   
   const getStatusColor = (): string => {

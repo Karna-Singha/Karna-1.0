@@ -1,10 +1,42 @@
 
-import React from 'react';
+import React, { useState } from 'react';
 import Sidebar from '@/components/Sidebar';
 import StatsOverview from '@/components/StatsOverview';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Button } from '@/components/ui/button';
+import { Sparkles, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 
 const Statistics = () => {
+  const [aiRecommendation, setAiRecommendation] = useState<string>('');
+  const [isLoadingRecommendation, setIsLoadingRecommendation] = useState<boolean>(false);
+
+  const generateRecommendation = async () => {
+    setIsLoadingRecommendation(true);
+    
+    try {
+      // In a real implementation, this would make an API call to DeepSeek
+      // For demonstration, we'll simulate a delay and response
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      
+      const recommendations = [
+        "Based on your study patterns, I recommend focusing more on Physics and allocating specific times for difficult exercises. Your performance in physical chemistry has improved by 15%, which suggests your study strategy for this subject is effective.",
+        "Your revision pattern shows gaps in Organic Chemistry. Consider using spaced repetition for formulas and reactions. The data suggests you perform best when studying in 50-minute focused sessions followed by 10-minute breaks.",
+        "Analysis of your learning patterns suggests you retain information better when you review material 24 hours after initially studying it. Try implementing a structured review schedule for Mathematics to improve problem-solving efficiency.",
+        "Your productivity peaks during morning hours (8-11 AM) with a 78% efficiency rate. Consider scheduling your most challenging subjects during this window. For Botany, visual learning methods have proven most effective based on your task completion rates."
+      ];
+      
+      const randomRecommendation = recommendations[Math.floor(Math.random() * recommendations.length)];
+      setAiRecommendation(randomRecommendation);
+      toast.success("AI recommendation generated!");
+    } catch (error) {
+      console.error('Error generating recommendation:', error);
+      toast.error('Failed to generate recommendation');
+    } finally {
+      setIsLoadingRecommendation(false);
+    }
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar />
@@ -23,19 +55,53 @@ const Statistics = () => {
           <div className="mt-6">
             <Card>
               <CardHeader>
-                <CardTitle>Productivity Insights</CardTitle>
+                <CardTitle className="flex items-center justify-between">
+                  <span>AI Recommendations</span>
+                  <Button 
+                    size="sm" 
+                    onClick={generateRecommendation}
+                    disabled={isLoadingRecommendation}
+                  >
+                    {isLoadingRecommendation ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        Analyzing...
+                      </>
+                    ) : (
+                      <>
+                        <Sparkles className="mr-2 h-4 w-4" />
+                        Generate Insights
+                      </>
+                    )}
+                  </Button>
+                </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
-                  <p className="text-muted-foreground">
-                    Your most productive day is <span className="font-medium text-primary">Friday</span>, with an average productivity ratio of <span className="font-medium text-primary">85%</span>.
-                  </p>
-                  <p className="text-muted-foreground">
-                    You've completed <span className="font-medium text-primary">24 tasks</span> this week, which is <span className="font-medium text-green-500">15% more</span> than last week.
-                  </p>
-                  <p className="text-muted-foreground">
-                    Your average study session lasts <span className="font-medium text-primary">45 minutes</span>, which is optimal for deep focus.
-                  </p>
+                  {isLoadingRecommendation ? (
+                    <div className="flex items-center justify-center py-6">
+                      <Loader2 className="h-6 w-6 animate-spin text-primary" />
+                      <span className="ml-2">Analyzing your study patterns...</span>
+                    </div>
+                  ) : aiRecommendation ? (
+                    <div className="p-4 rounded-lg bg-primary/5 border border-primary/10">
+                      <p className="text-muted-foreground">
+                        {aiRecommendation}
+                      </p>
+                    </div>
+                  ) : (
+                    <>
+                      <p className="text-muted-foreground">
+                        Your most productive day is <span className="font-medium text-primary">Friday</span>, with an average productivity ratio of <span className="font-medium text-primary">85%</span>.
+                      </p>
+                      <p className="text-muted-foreground">
+                        You've completed <span className="font-medium text-primary">24 tasks</span> this week, which is <span className="font-medium text-green-500">15% more</span> than last week.
+                      </p>
+                      <p className="text-muted-foreground">
+                        Your average study session lasts <span className="font-medium text-primary">45 minutes</span>, which is optimal for deep focus.
+                      </p>
+                    </>
+                  )}
                 </div>
               </CardContent>
             </Card>
