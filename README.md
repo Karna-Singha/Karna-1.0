@@ -1,73 +1,65 @@
-# Welcome to your Lovable project
+# Karna Study App
 
-## Project info
+A powerful study tool with focus timer, task management, and AI-powered insights.
 
-**URL**: https://lovable.dev/projects/c6bd16da-106d-4a32-89dc-fd82b4b5af9d
+## Features
 
-## How can I edit this code?
+- **Focus Timer**: Track your work and break sessions
+- **Task Management**: Organize your study tasks with automatic spaced repetition
+- **AI Insights**: Get personalized insights to improve your study habits
+- **Responsive Design**: Works on all devices
 
-There are several ways of editing your application.
+## Getting Started
 
-**Use Lovable**
+### Prerequisites
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/c6bd16da-106d-4a32-89dc-fd82b4b5af9d) and start prompting.
+- Node.js 16+
+- npm or yarn
 
-Changes made via Lovable will be committed automatically to this repo.
+### Installation
 
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
-
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+1. Clone the repository
+```bash
+git clone https://github.com/yourusername/karna-study-app.git
+cd karna-study-app
 ```
 
-**Edit a file directly in GitHub**
+2. Install dependencies
+```bash
+npm install
+# or
+yarn install
+```
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+3. Start the development server
+```bash
+npm run dev
+# or
+yarn dev
+```
 
-**Use GitHub Codespaces**
+4. Open your browser and navigate to `http://localhost:8080`
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Tech Stack
 
-## What technologies are used for this project?
+This project uses:
 
-This project is built with:
-
-- Vite
-- TypeScript
 - React
-- shadcn-ui
-- Tailwind CSS
+- TypeScript
+- Vite
+- TailwindCSS
+- Shadcn UI Components
+- date-fns for date manipulation
+- LocalStorage for data persistence
 
-## How can I deploy this project?
+## Spaced Repetition System
 
-Simply open [Lovable](https://lovable.dev/projects/c6bd16da-106d-4a32-89dc-fd82b4b5af9d) and click on Share -> Publish.
+Karna implements a scientifically-backed spaced repetition system that automatically schedules review tasks at optimal intervals (3, 7, 15, 30, 60, and 90 days) to maximize retention.
 
-## Can I connect a custom domain to my Lovable project?
+## Contributing
 
-Yes it is!
+Contributions are welcome! Please feel free to submit a Pull Request.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## License
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/tips-tricks/custom-domain#step-by-step-guide)
+This project is licensed under the MIT License - see the LICENSE file for details.
