@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Check, Plus, X, Calendar, Clock } from 'lucide-react';
+import { Check, Plus, X, Calendar, Clock, Trash2 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useTask, Task } from '@/contexts/TaskContext';
-import { format, isPast, isFuture } from 'date-fns';
+import { format, isPast, isFuture, isToday } from 'date-fns';
 
 interface TaskManagementProps {
   onTasksUpdate?: (tasks: Task[]) => void;
@@ -97,6 +97,14 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
       return 'border-l-4 border-purple-500';
     } else {
       return 'border-l-4 border-orange-500';
+    }
+  };
+  
+  const getDateDisplay = (date: Date) => {
+    if (isToday(date)) {
+      return 'Today';
+    } else {
+      return format(date, 'MMM d');
     }
   };
 
@@ -229,7 +237,7 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
                   {task.isSpacedTask && (
                     <Badge variant="outline" className="text-xs flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
-                      {format(task.createdAt, 'MMM d')}
+                      {getDateDisplay(task.createdAt)}
                     </Badge>
                   )}
                   
@@ -240,6 +248,15 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
                   )}
                 </div>
               </div>
+              
+              <Button
+                variant="ghost" 
+                size="icon"
+                className="h-6 w-6 text-muted-foreground hover:text-destructive"
+                onClick={() => deleteTask(task.id)}
+              >
+                <Trash2 size={14} />
+              </Button>
             </div>
           ))}
           

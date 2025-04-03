@@ -8,12 +8,9 @@ export function ThemeToggle() {
   
   // Initialize theme based on system preference
   React.useEffect(() => {
-    // Check if we should use dark mode
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    setIsDark(prefersDark);
-    
-    // Apply initial theme
-    document.documentElement.classList.toggle("dark", prefersDark);
+    // Check if dark mode class is already applied
+    const hasDarkClass = document.documentElement.classList.contains('dark');
+    setIsDark(hasDarkClass);
   }, []);
   
   const toggleTheme = () => {
@@ -29,6 +26,9 @@ export function ThemeToggle() {
       document.documentElement.classList.remove("dark");
     }
     
+    // Save theme preference
+    localStorage.setItem('theme', newIsDark ? 'dark' : 'light');
+    
     const newTheme = newIsDark ? "Dark" : "Light";
     toast.success(`${newTheme} mode enabled`);
   };
@@ -40,6 +40,7 @@ export function ThemeToggle() {
       onClick={toggleTheme}
       className="rounded-full"
       aria-label="Toggle theme"
+      title={isDark ? "Switch to light mode" : "Switch to dark mode"}
     >
       {isDark ? (
         <Moon className="h-5 w-5 text-primary" />

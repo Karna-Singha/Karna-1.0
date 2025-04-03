@@ -14,11 +14,18 @@ import { TaskProvider } from "./contexts/TaskContext";
 const queryClient = new QueryClient();
 
 const App = () => {
-  // Initialize dark mode by default
+  // Initialize theme based on saved preference or default to dark mode
   React.useEffect(() => {
-    // Check if dark mode class is already applied
-    if (!document.documentElement.classList.contains('dark')) {
+    // Get saved theme preference
+    const savedTheme = localStorage.getItem('theme') || 'dark';
+    
+    // Apply the theme
+    if (savedTheme === 'dark') {
       document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
     }
   }, []);
 

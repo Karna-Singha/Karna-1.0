@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { addDays, format } from 'date-fns';
+import { addDays, format, isAfter } from 'date-fns';
 
 // Define the structure of a task
 export interface Task {
@@ -57,7 +57,7 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
     // Create a new task for each interval
     SPACED_REPETITION_INTERVALS.forEach(interval => {
-      const dueDate = addDays(now, interval);
+      const dueDate = addDays(new Date(), interval);
       let title = task.title;
 
       // Apply prefixes based on the interval
@@ -125,7 +125,10 @@ export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   const deleteTask = (id: string) => {
-    setTasks(prevTasks => prevTasks.filter(task => task.id !== id));
+    // Also delete any spaced repetition tasks derived from this task
+    setTasks(prevTasks => prevTasks.filter(task => 
+      task.id !== id && task.parentTaskId !== id
+    ));
   };
 
   // Value to be provided by the context
