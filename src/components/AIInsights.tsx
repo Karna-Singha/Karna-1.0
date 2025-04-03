@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
@@ -81,7 +80,12 @@ const AIInsights: React.FC<AIInsightsProps> = ({
     // Load difficult subjects from localStorage
     const storedDifficultSubjects = localStorage.getItem('difficultSubjects');
     if (storedDifficultSubjects) {
-      setDifficultSubjects(JSON.parse(storedDifficultSubjects));
+      try {
+        setDifficultSubjects(JSON.parse(storedDifficultSubjects));
+      } catch (error) {
+        console.error("Error parsing difficult subjects:", error);
+        setDifficultSubjects([]);
+      }
     }
 
     // Initial insight generation when component mounts
@@ -113,7 +117,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({
       setDifficultSubjects(uniqueDifficultSubjects);
       localStorage.setItem('difficultSubjects', JSON.stringify(uniqueDifficultSubjects));
     }
-  }, [tasks]);
+  }, [tasks, difficultSubjects]);
 
   // Save data when user is active
   useEffect(() => {
@@ -176,26 +180,29 @@ const AIInsights: React.FC<AIInsightsProps> = ({
       
       // Generate insights based on the identified mode
       let randomInsight = '';
+      const safeSubject = subjects.length > 0 ? subjects[0] : 'your subjects';
+      const safeDifficultSubject = uniqueDifficultSubjects.length > 0 ? uniqueDifficultSubjects[0] : safeSubject;
       
       if (insightMode === 'slacking') {
         // Hinglish slang for when user is slacking
         const slackingInsights = [
-          `Arrey yaar! ${slackDays} din se gayab ho? Kitna chill kar rahe ho! Get back to your study schedule, especially for ${uniqueDifficultSubjects[0] || subjects[0]}!`,
-          `Kya scene hai bhai? ${slackDays} din se koi padhai nahi? Thoda to mehnat karo, especially on ${uniqueDifficultSubjects[0] || subjects[0]}!`,
-          `Bhai/Behen, ${slackDays} din ho gaye aur aap dikhe nahi. Padhai ka kya hua? ${uniqueDifficultSubjects[0] || subjects[0]} needs your attention ASAP!`,
-          `Hello ji, ${slackDays} din se break chal raha hai? Great chill! Par ab ${uniqueDifficultSubjects[0] || subjects[0]} pe dhyan do thoda!`,
-          `Kaise ho mitr? ${slackDays} din se gayab? Thoda padhai pe dhyan do, especially ${uniqueDifficultSubjects[0] || subjects[0]} pe focus karo!`
+          `Arrey yaar! ${slackDays} din se gayab ho? Kitna chill kar rahe ho! Get back to your study schedule, especially for ${safeDifficultSubject}!`,
+          `Kya scene hai bhai? ${slackDays} din se koi padhai nahi? Thoda to mehnat karo, especially on ${safeDifficultSubject}!`,
+          `Bhai/Behen, ${slackDays} din ho gaye aur aap dikhe nahi. Padhai ka kya hua? ${safeDifficultSubject} needs your attention ASAP!`,
+          `Hello ji, ${slackDays} din se break chal raha hai? Great chill! Par ab ${safeDifficultSubject} pe dhyan do thoda!`,
+          `Kaise ho mitr? ${slackDays} din se gayab? Thoda padhai pe dhyan do, especially ${safeDifficultSubject} pe focus karo!`
         ];
         
         randomInsight = slackingInsights[Math.floor(Math.random() * slackingInsights.length)];
       } else if (insightMode === 'difficult_subjects') {
         // Enhanced reminders about difficult subjects with more frequent revision suggestions
+        const difficultSubjectsJoined = uniqueDifficultSubjects.join(', ');
         const difficultSubjectInsights = [
-          `I noticed ${uniqueDifficultSubjects.join(', ')} are challenging for you. You should revise these topics at least twice a week. Try dedicating 25% more time to these subjects.`,
-          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) need more frequent revision. Schedule daily 15-minute sessions for these topics using the Feynman technique - explain the concepts aloud to improve understanding.`,
-          `Time to focus on your challenging areas! ${uniqueDifficultSubjects.join(', ')} need extra attention. Try breaking these topics into smaller chunks and review them every 48 hours for better retention.`,
-          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) should be reviewed at least 3 times per week. Studies show spaced repetition with multiple short study sessions is most effective for challenging material.`,
-          `I've noticed ${uniqueDifficultSubjects.join(', ')} are your most challenging areas. Consider creating flashcards for these topics and review them daily for 10 minutes - this consistent practice is key to mastering difficult concepts.`
+          `I noticed ${difficultSubjectsJoined} are challenging for you. You should revise these topics at least twice a week. Try dedicating 25% more time to these subjects.`,
+          `Your difficult subjects (${difficultSubjectsJoined}) need more frequent revision. Schedule daily 15-minute sessions for these topics using the Feynman technique - explain the concepts aloud to improve understanding.`,
+          `Time to focus on your challenging areas! ${difficultSubjectsJoined} need extra attention. Try breaking these topics into smaller chunks and review them every 48 hours for better retention.`,
+          `Your difficult subjects (${difficultSubjectsJoined}) should be reviewed at least 3 times per week. Studies show spaced repetition with multiple short study sessions is most effective for challenging material.`,
+          `I've noticed ${difficultSubjectsJoined} are your most challenging areas. Consider creating flashcards for these topics and review them daily for 10 minutes - this consistent practice is key to mastering difficult concepts.`
         ];
         
         randomInsight = difficultSubjectInsights[Math.floor(Math.random() * difficultSubjectInsights.length)];
@@ -206,7 +213,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({
           `I've noticed your productivity is at ${productivityRatio}%. Consider eliminating distractions or changing your study environment to help focus better.`,
           `With a productivity ratio of ${productivityRatio}%, you might benefit from shorter, more focused study sessions. Quality often beats quantity!`,
           `Your current productivity ratio is ${productivityRatio}%. Try setting specific goals for each study session to maintain focus and track progress better.`,
-          `Productivity currently at ${productivityRatio}%. Consider studying your most challenging subject (${uniqueDifficultSubjects[0] || subjects[0]}) when you're most alert during the day.`
+          `Productivity currently at ${productivityRatio}%. Consider studying your most challenging subject (${safeDifficultSubject}) when you're most alert during the day.`
         ];
         
         randomInsight = lowProductivityInsights[Math.floor(Math.random() * lowProductivityInsights.length)];
@@ -223,9 +230,9 @@ const AIInsights: React.FC<AIInsightsProps> = ({
         [
           `You've been working hard! With a productivity ratio of ${productivityRatio}%, you're doing great. Consider taking a slightly longer break next time to maintain this momentum.`,
           `I notice you've completed ${completedTasks} tasks today. Great progress! Focus on breaking down your remaining ${pendingTasks} tasks into smaller chunks for better momentum.`,
-          `Your study pattern shows strength in ${subjects[0] || 'your subjects'}. For optimal learning, try interleaving with ${subjects[1] || 'other subjects'} to enhance memory retention.`,
+          `Your study pattern shows strength in ${safeSubject}. For optimal learning, try interleaving with ${subjects.length > 1 ? subjects[1] : 'other subjects'} to enhance memory retention.`,
           `Based on your focus patterns, you might benefit from the Pomodoro technique. Try 25-minute focus sessions with 5-minute breaks between them.`,
-          `You've spent ${workTime} working. To optimize your learning, consider reviewing ${subjects[0] || 'your materials'} again in 24 hours to strengthen neural connections.`
+          `You've spent ${workTime} working. To optimize your learning, consider reviewing ${safeSubject} again in 24 hours to strengthen neural connections.`
         ];
         
         randomInsight = regularInsights[Math.floor(Math.random() * regularInsights.length)];

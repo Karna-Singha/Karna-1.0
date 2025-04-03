@@ -17,6 +17,7 @@ export interface Task {
 
 // The intervals for spaced repetition in days
 const SPACED_REPETITION_INTERVALS = [3, 7, 15, 30, 60, 90];
+const LOCAL_STORAGE_KEY = 'karna-tasks';
 
 interface TaskContextType {
   tasks: Task[];
@@ -27,32 +28,68 @@ interface TaskContextType {
 
 const TaskContext = React.createContext<TaskContextType | undefined>(undefined);
 
+// Helper function to parse dates from localStorage
+const parseTaskDates = (task: any): Task => {
+  return {
+    ...task,
+    createdAt: new Date(task.createdAt),
+    completedAt: task.completedAt ? new Date(task.completedAt) : undefined
+  };
+};
+
+// Sample default tasks
+const defaultTasks: Task[] = [
+  {
+    id: '1',
+    title: 'Complete physics problems from chapter 5',
+    subject: 'Physics',
+    difficulty: 4,
+    completed: false,
+    createdAt: new Date()
+  },
+  {
+    id: '2',
+    title: 'Review organic chemistry nomenclature',
+    subject: 'Organic Chemistry',
+    difficulty: 3,
+    completed: false,
+    createdAt: new Date()
+  }
+];
+
 export const TaskProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [tasks, setTasks] = React.useState<Task[]>([
-    {
-      id: '1',
-      title: 'Complete physics problems from chapter 5',
-      subject: 'Physics',
-      difficulty: 4,
-      completed: false,
-      createdAt: new Date()
-    },
-    {
-      id: '2',
-      title: 'Review organic chemistry nomenclature',
-      subject: 'Organic Chemistry',
-      difficulty: 3,
-      completed: false,
-      createdAt: new Date()
+  // Initialize state from localStorage if available
+  const [tasks, setTasks] = React.useState<Task[]>(() => {
+    try {
+      const savedTasks = localStorage.getItem(LOCAL_STORAGE_KEY);
+      if (savedTasks) {
+        const parsedTasks = JSON.parse(savedTasks);
+        return Array.isArray(parsedTasks) 
+          ? parsedTasks.map(parseTaskDates)
+          : defaultTasks;
+      }
+    } catch (error) {
+      console.error('Error loading tasks from localStorage:', error);
     }
-  ]);
+    
+    // Default tasks if localStorage is empty or invalid
+    return defaultTasks;
+  });
+  
+  // Save tasks to localStorage whenever they change
+  React.useEffect(() => {
+    try {
+      localStorage.setItem(LOCAL_STORAGE_KEY, JSON.stringify(tasks));
+    } catch (error) {
+      console.error('Error saving tasks to localStorage:', error);
+    }
+  }, [tasks]);
 
   // Function to create spaced repetition tasks
   const createSpacedRepetitionTasks = (task: Task) => {
     // Only create spaced tasks for non-spaced original tasks
     if (task.isSpacedTask) return;
 
-    const now = new Date();
     const newTasks: Task[] = [];
 
     // Create a new task for each interval

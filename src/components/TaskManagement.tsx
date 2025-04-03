@@ -7,7 +7,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
 import { useTask, Task } from '@/contexts/TaskContext';
-import { format, isPast, isFuture, isToday } from 'date-fns';
+import { format, isPast, isFuture, isToday, isSameDay, compareAsc } from 'date-fns';
 
 interface TaskManagementProps {
   onTasksUpdate?: (tasks: Task[]) => void;
@@ -29,7 +29,7 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
   const [newSubject, setNewSubject] = React.useState<string>('Physics');
   const [newDifficulty, setNewDifficulty] = React.useState<number>(3);
   const [isAddingTask, setIsAddingTask] = React.useState<boolean>(false);
-  const [showSpacedTasks, setShowSpacedTasks] = React.useState<boolean>(true);
+  const [currentDate, setCurrentDate] = React.useState<Date>(new Date());
   
   React.useEffect(() => {
     // Notify parent component of task updates
@@ -37,6 +37,18 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
       onTasksUpdate(tasks);
     }
   }, [tasks, onTasksUpdate]);
+
+  // Function to check if a spaced task is due today or in the past
+  const isTaskDue = (task: Task): boolean => {
+    if (!task.isSpacedTask) return true;
+    
+    try {
+      return isSameDay(task.createdAt, currentDate) || compareAsc(task.createdAt, currentDate) <= 0;
+    } catch (error) {
+      console.error('Error comparing dates:', error);
+      return false;
+    }
+  };
 
   const handleAddTask = () => {
     if (newTaskTitle.trim() === '') return;
@@ -100,21 +112,21 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
     }
   };
   
-  const getDateDisplay = (date: Date) => {
-    if (isToday(date)) {
-      return 'Today';
-    } else {
-      return format(date, 'MMM d');
+  const getDateDisplay = (date: Date): string => {
+    try {
+      if (isToday(date)) {
+        return 'Today';
+      } else {
+        return format(date, 'MMM d');
+      }
+    } catch (error) {
+      console.error('Error formatting date:', error, date);
+      return 'Invalid date';
     }
   };
 
-  // Filter tasks based on our display settings
-  const filteredTasks = tasks.filter(task => {
-    // If we're showing spaced tasks, include everything
-    if (showSpacedTasks) return true;
-    // Otherwise only include non-spaced tasks
-    return !task.isSpacedTask;
-  });
+  // Filter tasks to only show ones that are due
+  const filteredTasks = tasks.filter(isTaskDue);
 
   // Sort tasks - first by completion, then by due date for spaced tasks
   const sortedTasks = [...filteredTasks].sort((a, b) => {
@@ -137,19 +149,21 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
     return b.createdAt.getTime() - a.createdAt.getTime();
   });
 
+  // Check for due tasks periodically (every minute)
+  React.useEffect(() => {
+    const interval = setInterval(() => {
+      // This will trigger a re-render and refresh the filtered tasks
+      setCurrentDate(new Date());
+    }, 60000);
+    
+    return () => clearInterval(interval);
+  }, []);
+
   return (
     <Card className="shadow-lg border-karna-primary/20">
       <CardHeader className="pb-2 flex-row flex justify-between items-center">
         <CardTitle className="text-2xl font-bold">Tasks</CardTitle>
-        <div className="flex gap-2">
-          <Button 
-            variant="outline" 
-            size="sm" 
-            onClick={() => setShowSpacedTasks(!showSpacedTasks)}
-            className="text-xs"
-          >
-            {showSpacedTasks ? 'Hide Spaced Tasks' : 'Show Spaced Tasks'}
-          </Button>
+        <div>
           <Button 
             variant="ghost" 
             size="icon" 
@@ -210,7 +224,7 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
           </div>
         )}
         
-        <div className="space-y-2">
+        <div className="space-y-2 max-h-[500px] overflow-y-auto">
           {sortedTasks.map((task) => (
             <div
               key={task.id}
@@ -238,12 +252,6 @@ const TaskManagement: React.FC<TaskManagementProps> = ({ onTasksUpdate }) => {
                     <Badge variant="outline" className="text-xs flex items-center gap-1">
                       <Calendar className="h-3 w-3" />
                       {getDateDisplay(task.createdAt)}
-                    </Badge>
-                  )}
-                  
-                  {task.isSpacedTask && task.spaceRepetitionDay && (
-                    <Badge variant="secondary" className="text-xs">
-                      SR: {task.spaceRepetitionDay} days
                     </Badge>
                   )}
                 </div>

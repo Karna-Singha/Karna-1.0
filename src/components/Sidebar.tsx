@@ -1,28 +1,17 @@
 import * as React from 'react';
 import { Link, useLocation } from 'react-router-dom';
-import { BarChart2, Clock, ChevronLeft, Menu } from 'lucide-react';
+import { BarChart2, Clock } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Button } from '@/components/ui/button';
 
 const Sidebar: React.FC = () => {
   // Use the location hook to determine the active route
   const location = useLocation();
   const activeRoute = location.pathname;
-  const [collapsed, setCollapsed] = React.useState(true);
-
-  const toggleCollapse = () => {
-    setCollapsed(!collapsed);
-  };
 
   return (
-    <div className={cn(
-      "h-screen bg-karna-dark-blue p-4 flex flex-col gap-10 transition-all duration-300",
-      "w-20"
-    )}>
-      <div className="flex items-center justify-center">
-        <Button variant="ghost" size="icon" onClick={toggleCollapse} className="text-karna-accent h-14 w-14 rounded-full">
-          <Menu size={32} />
-        </Button>
+    <div className="h-screen bg-karna-dark-blue p-4 flex flex-col gap-10 w-20">
+      <div className="flex items-center justify-center pt-4">
+        {/* App logo or icon can go here */}
       </div>
       
       <div className="flex flex-col gap-8 items-center">
