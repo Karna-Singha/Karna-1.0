@@ -30,6 +30,7 @@ const AIInsights: React.FC<AIInsightsProps> = ({
 }) => {
   const [insight, setInsight] = useState<string>('');
   const [isLoading, setIsLoading] = useState<boolean>(false);
+  const [lastGeneratedAt, setLastGeneratedAt] = useState<number>(0);
 
   const formatTime = (seconds: number): string => {
     const hrs = Math.floor(seconds / 3600);
@@ -42,8 +43,15 @@ const AIInsights: React.FC<AIInsightsProps> = ({
   };
 
   const generateInsight = async () => {
+    // Prevent generating insights too frequently
+    const now = Date.now();
+    if (now - lastGeneratedAt < 30000) { // 30 seconds cooldown
+      return;
+    }
+    
     setIsLoading(true);
     setInsight('');
+    setLastGeneratedAt(now);
 
     try {
       // Prepare context for the AI
@@ -93,12 +101,19 @@ const AIInsights: React.FC<AIInsightsProps> = ({
     }
   };
 
-  // Generate insight automatically when component mounts or when relevant props change
+  // Generate insight automatically when component mounts or when significant changes occur
   useEffect(() => {
-    if (tasks.length > 0) {
+    // Only generate insights when there are tasks and either:
+    // 1. This is the first load (lastGeneratedAt is 0)
+    // 2. A task was completed/added (tasks.length or completed tasks changed)
+    if (tasks.length > 0 && (
+      lastGeneratedAt === 0 || 
+      // We don't want to regenerate on every timer tick, only on significant changes
+      (workSeconds > 300 && breakSeconds > 60) // Only after meaningful work/break periods
+    )) {
       generateInsight();
     }
-  }, [tasks, workSeconds, breakSeconds]);
+  }, [tasks]); // Only depend on tasks changes, not timer values
 
   return (
     <Card className="shadow-lg border-karna-primary/20">
