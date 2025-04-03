@@ -1,5 +1,5 @@
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
@@ -7,6 +7,9 @@ import { toast } from 'sonner';
 // DeepSeek API key is now directly integrated
 const DEEPSEEK_API_KEY = "sk-b269b97497974e3b96b5d27b766cbb7b";
 const DEEPSEEK_API_URL = 'https://api.deepseek.com/v1/chat/completions';
+
+// New constants for timer settings
+const INSIGHT_GENERATION_INTERVAL = 90 * 60 * 1000; // 90 minutes in milliseconds
 
 interface AIInsightsProps {
   workSeconds: number;
@@ -32,6 +35,8 @@ const AIInsights: React.FC<AIInsightsProps> = ({
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [lastGeneratedAt, setLastGeneratedAt] = useState<number>(0);
   const [slackDays, setSlackDays] = useState<number>(0);
+  const [difficultSubjects, setDifficultSubjects] = useState<string[]>([]);
+  const timerRef = useRef<NodeJS.Timeout | null>(null);
   
   // Track last activity date to detect slack days
   const [lastActiveDate, setLastActiveDate] = useState<string>(new Date().toDateString());
@@ -72,7 +77,43 @@ const AIInsights: React.FC<AIInsightsProps> = ({
       localStorage.setItem('lastActiveDate', today);
       setLastActiveDate(today);
     }
+
+    // Load difficult subjects from localStorage
+    const storedDifficultSubjects = localStorage.getItem('difficultSubjects');
+    if (storedDifficultSubjects) {
+      setDifficultSubjects(JSON.parse(storedDifficultSubjects));
+    }
+
+    // Initial insight generation when component mounts
+    generateInsight();
+
+    // Setup interval for generating insights every 90 minutes
+    timerRef.current = setInterval(() => {
+      generateInsight();
+    }, INSIGHT_GENERATION_INTERVAL);
+
+    // Cleanup interval when component unmounts
+    return () => {
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+    };
   }, []);
+
+  // Update difficult subjects when tasks change
+  useEffect(() => {
+    // Identify difficult subjects (difficulty >= 4) and store them
+    const hardSubjects = tasks
+      .filter(t => t.difficulty >= 4)
+      .map(t => t.subject);
+    
+    const uniqueDifficultSubjects = [...new Set(hardSubjects)];
+    
+    if (JSON.stringify(uniqueDifficultSubjects) !== JSON.stringify(difficultSubjects)) {
+      setDifficultSubjects(uniqueDifficultSubjects);
+      localStorage.setItem('difficultSubjects', JSON.stringify(uniqueDifficultSubjects));
+    }
+  }, [tasks]);
 
   // Save data when user is active
   useEffect(() => {
@@ -82,9 +123,9 @@ const AIInsights: React.FC<AIInsightsProps> = ({
   }, [workSeconds]);
   
   const generateInsight = async () => {
-    // Prevent generating insights too frequently
+    // Prevent generating insights too frequently (30-second cooldown)
     const now = Date.now();
-    if (now - lastGeneratedAt < 30000) { // 30 seconds cooldown
+    if (now - lastGeneratedAt < 30000) {
       return;
     }
     
@@ -93,12 +134,8 @@ const AIInsights: React.FC<AIInsightsProps> = ({
     setLastGeneratedAt(now);
 
     try {
-      // Identify difficult subjects (difficulty >= 4)
-      const difficultSubjects = tasks
-        .filter(t => t.difficulty >= 4)
-        .map(t => t.subject);
-      
-      const uniqueDifficultSubjects = [...new Set(difficultSubjects)];
+      // Identify difficult subjects from state (already filtered from tasks)
+      const uniqueDifficultSubjects = difficultSubjects;
       
       // Prepare context for the AI
       const workTime = formatTime(workSeconds);
@@ -152,13 +189,13 @@ const AIInsights: React.FC<AIInsightsProps> = ({
         
         randomInsight = slackingInsights[Math.floor(Math.random() * slackingInsights.length)];
       } else if (insightMode === 'difficult_subjects') {
-        // Reminders about difficult subjects
+        // Enhanced reminders about difficult subjects with more frequent revision suggestions
         const difficultSubjectInsights = [
-          `I noticed ${uniqueDifficultSubjects.join(', ')} are challenging for you. Consider dedicating 25% more time to these subjects this week.`,
-          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) need more frequent revision. Try the Feynman technique - explain the concepts aloud to improve understanding.`,
-          `Time to focus on your challenging areas! ${uniqueDifficultSubjects.join(', ')} need extra attention. Try breaking down these topics into smaller chunks for better comprehension.`,
-          `Don't forget to revise ${uniqueDifficultSubjects.join(', ')} today. Studies show that difficult subjects benefit from spaced repetition - multiple short study sessions spread over time.`,
-          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) are the key to improving your overall performance. Schedule focused sessions specifically for these topics.`
+          `I noticed ${uniqueDifficultSubjects.join(', ')} are challenging for you. You should revise these topics at least twice a week. Try dedicating 25% more time to these subjects.`,
+          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) need more frequent revision. Schedule daily 15-minute sessions for these topics using the Feynman technique - explain the concepts aloud to improve understanding.`,
+          `Time to focus on your challenging areas! ${uniqueDifficultSubjects.join(', ')} need extra attention. Try breaking these topics into smaller chunks and review them every 48 hours for better retention.`,
+          `Your difficult subjects (${uniqueDifficultSubjects.join(', ')}) should be reviewed at least 3 times per week. Studies show spaced repetition with multiple short study sessions is most effective for challenging material.`,
+          `I've noticed ${uniqueDifficultSubjects.join(', ')} are your most challenging areas. Consider creating flashcards for these topics and review them daily for 10 minutes - this consistent practice is key to mastering difficult concepts.`
         ];
         
         randomInsight = difficultSubjectInsights[Math.floor(Math.random() * difficultSubjectInsights.length)];
@@ -174,8 +211,16 @@ const AIInsights: React.FC<AIInsightsProps> = ({
         
         randomInsight = lowProductivityInsights[Math.floor(Math.random() * lowProductivityInsights.length)];
       } else {
-        // Regular insights
-        const regularInsights = [
+        // Regular insights with reminders about difficult subjects if they exist
+        const regularInsights = uniqueDifficultSubjects.length > 0 ? 
+        [
+          `You've been working hard! With a productivity ratio of ${productivityRatio}%. Don't forget to review your challenging subjects (${uniqueDifficultSubjects.join(', ')}) this week.`,
+          `I notice you've completed ${completedTasks} tasks. Great progress! Remember to schedule extra review time for ${uniqueDifficultSubjects.join(', ')} - consistent practice is key for difficult topics.`,
+          `Your study pattern shows good focus. For optimal learning, make sure to revisit ${uniqueDifficultSubjects.join(', ')} at least twice this week to enhance memory retention.`,
+          `Based on your progress, you're doing well! Don't forget that your difficult subjects (${uniqueDifficultSubjects.join(', ')}) benefit most from spaced repetition - review them every 2-3 days.`,
+          `You've spent ${workTime} working productively. To optimize your learning, consider daily short reviews of ${uniqueDifficultSubjects.join(', ')} to strengthen neural connections.`
+        ] : 
+        [
           `You've been working hard! With a productivity ratio of ${productivityRatio}%, you're doing great. Consider taking a slightly longer break next time to maintain this momentum.`,
           `I notice you've completed ${completedTasks} tasks today. Great progress! Focus on breaking down your remaining ${pendingTasks} tasks into smaller chunks for better momentum.`,
           `Your study pattern shows strength in ${subjects[0] || 'your subjects'}. For optimal learning, try interleaving with ${subjects[1] || 'other subjects'} to enhance memory retention.`,
@@ -203,20 +248,6 @@ const AIInsights: React.FC<AIInsightsProps> = ({
       setIsLoading(false);
     }
   };
-
-  // Generate insight automatically when component mounts or when significant changes occur
-  useEffect(() => {
-    // Only generate insights when there are tasks and either:
-    // 1. This is the first load (lastGeneratedAt is 0)
-    // 2. A task was completed/added (tasks.length or completed tasks changed)
-    if (tasks.length > 0 && (
-      lastGeneratedAt === 0 || 
-      // We don't want to regenerate on every timer tick, only on significant changes
-      (workSeconds > 300 && breakSeconds > 60) // Only after meaningful work/break periods
-    )) {
-      generateInsight();
-    }
-  }, [tasks]); // Only depend on tasks changes, not timer values
 
   return (
     <Card className="shadow-lg border-karna-primary/20">
